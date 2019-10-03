@@ -10,7 +10,7 @@ from sqlalchemy import create_engine, func
 
 from flask import Flask, jsonify, render_template
 
-
+app = Flask(__name__)
 # Database Setup
 
 engine = create_engine("sqlite:///Resources/hawaii.sqlite")
@@ -25,9 +25,8 @@ Measurement = Base.classes.measurement
 Station = Base.classes.station
 
 
-# Flask Setup
+session = Session(engine)
 
-app = Flask(__name__)
 
 @app.route('/')
 def index():
@@ -41,27 +40,24 @@ def welcome():
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/start<br/>"
-        f"/api/v1.0/end" 
+        f"/api/v1.0/start/end" 
     )
 
 @app.route('/api/v1.0/precipitation')
 def precipitation():
-    session = Session(engine)
-
-    # Create a dictionary from the row data and append to a list of all_precipitation
-
+    
     year_ago=dt.date(2017,8,23) - dt.timedelta(days=365)
     results = session.query(Measurement.date,Measurement.prcp).\
                     filter(Measurement.date >= year_ago).all()
     
-    session.close()
-
     all_precipitation = list(np.ravel(results))
 
     return jsonify(all_precipitation)
 
 @app.route('/api/v1.0/stations')
 def stations():
+
+    stationList=[]
 
     stats=session.query(Measurement.station).all()
     for stat in stats:
@@ -76,20 +72,42 @@ def tobs():
     year_agoT=dt.date(2017,8,23) - dt.timedelta(days=365)
 
     observations=session.query(Measurement.date,Measurement.tobs).\
-                    filter(Measurement.date >= year_ago).all()
+                    filter(Measurement.date >= year_agoT).all()
+    
     return jsonify(observations)
 
-@app.route('/api/v1.0/<start>/<end>')
-def api_dates(year, month, day):
 
-    def calc_temps(start_date, end_date):
-        start_date=dt.datetime(int(year), int(month), int(day))
-        end_date=dt.datetime(int(year), int(month), int(day))
+@app.route('/api/v1.0/<start>')
+def single_date(startdate):
+
+    startQuery = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),\
+        func.max(Measurement.tobs)).\
+        filter(func.strftime('%Y-%m-%d', Measurement.date = startdate).all()
+        
+    return jsonify(startQuery)
+
+
+@app.route('/api/v1.0/<start>/<end>')
+def api_dates(start, end):
+
+    #start_date=datetime.strptime(,%Y-%m-%d)
+    #end_date=datetime.strptime(,%Y-%m-%d)
+
+    # start_date (str): A dt.date str in the format %Y-%m-%d
+    # end_date (str): A dt.date str in the format %Y-%m-%d
+
+    #start_date=dt.datetime(int(%Y-%m-%d))
+    #end_date=dt.datetime(int(%Y-%m-%d))
+
+    #start_date=dt.datetime(int(year)-int(month)-int(day))
+    #end_date=dt.datetime(int(year)-int(month)-int(day))
     
-        dateQuery = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),\
-            func.max(Measurement.tobs)).filter(Measurement.date >= start_date).\
-            filter(Measurement.date <= end_date).all()
-        return jsonify([dateQuery])
+    dateQuery = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),\
+        func.max(Measurement.tobs)).\
+        filter(func.strftime('%Y-%m-%d', Measurement.date >= start).\
+        filter(func.strftime('%Y-%m-%d', Measurement.date <= end).all()
+        
+    return jsonify(dateQuery)
 
 
 if __name__ == '__main__':
