@@ -40,7 +40,7 @@ def welcome():
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/start<br/>"
-        f"/api/v1.0/start/end" 
+        f"/api/v1.0/startend" 
     )
 
 @app.route('/api/v1.0/precipitation')
@@ -76,36 +76,22 @@ def tobs():
     
     return jsonify(observations)
 
-
 @app.route('/api/v1.0/<start>')
 def single_date(startdate):
 
-    startQuery = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),\
+    startQuery = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), \
         func.max(Measurement.tobs)).\
-        filter(func.strftime('%Y-%m-%d', Measurement.date = startdate).all()
+        filter(func.strftime("%Y-%m-%d", Measurement.date) == startdate).all()
         
     return jsonify(startQuery)
 
-
-@app.route('/api/v1.0/<start>/<end>')
+@app.route('/api/v1.0/<start><end>')
 def api_dates(start, end):
 
-    #start_date=datetime.strptime(,%Y-%m-%d)
-    #end_date=datetime.strptime(,%Y-%m-%d)
-
-    # start_date (str): A dt.date str in the format %Y-%m-%d
-    # end_date (str): A dt.date str in the format %Y-%m-%d
-
-    #start_date=dt.datetime(int(%Y-%m-%d))
-    #end_date=dt.datetime(int(%Y-%m-%d))
-
-    #start_date=dt.datetime(int(year)-int(month)-int(day))
-    #end_date=dt.datetime(int(year)-int(month)-int(day))
-    
     dateQuery = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs),\
         func.max(Measurement.tobs)).\
-        filter(func.strftime('%Y-%m-%d', Measurement.date >= start).\
-        filter(func.strftime('%Y-%m-%d', Measurement.date <= end).all()
+        filter(func.strftime("%Y-%m-%d", Measurement.date) >= start).\
+        filter(func.strftime("%Y-%m-%d", Measurement.date) <= end).all()
         
     return jsonify(dateQuery)
 
